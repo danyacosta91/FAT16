@@ -8,6 +8,7 @@
 #include <cmath>
 #include <bitset>
 #include <string.h>
+#include <vector>
 using namespace std;
 
 class FAT
@@ -15,23 +16,30 @@ class FAT
 private:
 	struct d_entry{
 		bool _free;
-		char* _name;
+		string _name;
 		bool _dir;
-		char* _cDate;
-		char* _cluster;
+		string _cDate;
+		string _cluster;
 		unsigned int _size;
-		char* _reserved;
+		string _reserved;
 	};
 
 	struct cluster{
 		d_entry _entry[128];
+		string _data;
 	};
 
 	d_entry* _root;
-	void B_to_A(const char*, char*);
+	cluster* _data;
+	short* _fat;
+	void B_to_A(string, string);
+	void Tokenize(const string&, vector<string>&, const string&);
+	string strToBin(string);
 public:
 	FAT();
 	bool searchDir(string);
+	bool searchFile(string);
+	bool mkDir(string, string);
 	void save();
 	~FAT();
 };
