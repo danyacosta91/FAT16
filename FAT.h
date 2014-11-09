@@ -40,6 +40,11 @@ public:
 	bool searchDir(string);
 	bool searchFile(string);
 	bool mkDir(string, string);
+	bool rmDir(string, string);
+	string listDir(string);
+	bool cdDir(string, string);
+	bool createFile(string, string, string);
+	bool deleteFile(string, string);
 	void save();
 	~FAT();
 };
