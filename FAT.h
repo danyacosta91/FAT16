@@ -32,7 +32,7 @@ private:
 	d_entry* _root;
 	cluster* _data;
 	short* _fat;
-	void B_to_A(string, string);
+	string B_to_A(string);
 	void Tokenize(const string&, vector<string>&, const string&);
 	string strToBin(string);
 public:

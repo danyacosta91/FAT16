@@ -60,9 +60,13 @@ using namespace std;
 int main(){
 	FAT* _fat = new FAT();
 	_fat->mkDir("qwerasdfaa", "/");
+	_fat->mkDir("dany", "/");
 
 	if( _fat->searchDir("qwerasdfaa") )
-		cout << "Si" << endl;
+		cout << "Si 1" << endl;
+
+	if( _fat->searchDir("dany") )
+		cout << "Si 2" << endl;
 
 	delete _fat;
 	return 0;

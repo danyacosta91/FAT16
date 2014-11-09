@@ -15,7 +15,6 @@ FAT::FAT(){
 	vector<string> _lineTXT;
 	vector<string> _rowTXT;
 	vector<string>::iterator it;
-	vector<string>::iterator it2;
 	_root = new d_entry[512];
 	_fat = new short[65536];
 	_data = new cluster[65468];
@@ -37,15 +36,15 @@ FAT::FAT(){
 				tmp._free = true;
 			else{
 				tmp._free = false;
-				B_to_A( _rowTXT[1], tmp._name );
+				tmp._name = B_to_A( _rowTXT[1] );
 				if( strcmp(_rowTXT[2].c_str(), "0x000010" ) == 0 )
 					tmp._dir = true;
 				else
 					tmp._dir = false;
-				B_to_A( _rowTXT[3], tmp._cDate );
-				B_to_A( _rowTXT[4], tmp._cluster );
+				tmp._cDate = B_to_A( _rowTXT[3] );
+				tmp._cluster = B_to_A( _rowTXT[4] );
 				tmp._size = bitset<32>(_rowTXT[5]).to_ulong();
-				B_to_A( _rowTXT[6], tmp._reserved );
+				tmp._reserved = B_to_A( _rowTXT[6] );
 			}
 			_root[cont] = tmp;
 			cont++;
@@ -121,6 +120,7 @@ void FAT::save(){
 	_output += "$";
 
 	//WRITE IN FILE
+	remove("OS.fat");
 	ofstream _file;
 	_file.open( "OS.fat", ofstream::out );
 	_file << _output;
@@ -134,7 +134,6 @@ bool FAT::searchDir(string dirName){
 			if( strcmp( dirName.c_str(), name.c_str() ) == 0 )
 				return true;
 		}
-		return false;
 	}
 	return false;
 }
@@ -147,11 +146,12 @@ bool FAT::searchFile(string fileName){
 	return false;
 }
 
-void FAT::B_to_A(string input, string output){
+string FAT::B_to_A(string input){
 	int size= input.size();
 	int bin[8];
 	int tempChar = 0;
 	char character;
+	string output = "";
 
 	int a = 0;
 	for(int b=0; b<size/8; b++){
@@ -173,8 +173,9 @@ void FAT::B_to_A(string input, string output){
 
 		character = tempChar;
 		tempChar = 0;
-		output[b] = character;
+		output += character;
 	}
+	return output;
 }
 
 bool FAT::mkDir(string dirName, string dir){
