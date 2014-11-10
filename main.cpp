@@ -116,6 +116,20 @@ int main(){
 					if( _args.size() > 1 ){
 						//FAT de cat
 						if( strcmp( _args[1].c_str(), ".." ) == 0 ){
+							_args.clear();
+							Tokenize( _currentDir, _args, "/" );
+							if( _args.size()-1 > 1 ){
+								_currentDir = "";
+								for( auto it = 0; it < _args.size()-1; it++ ){
+									if( it < _args.size()-2 )
+										_currentDir += _args[it] + "/";
+									else
+										_currentDir += _args[it];
+								}
+							}else{
+								_currentDir = _PWD;
+								_get = _PWD + ":Mi_sh>";
+							}
 						}else{
 							if( strcmp( _currentDir.c_str(), _PWD.c_str() ) == 0 )
 								_currentDir = _args[1] + "/";
