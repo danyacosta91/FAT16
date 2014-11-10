@@ -135,7 +135,7 @@ int main(){
 		}else if( tecla == 127 ){
 			if( _line.length() > 0 ){
 			    _line = _line.substr( 0, _line.length()-1 );
-			    _get += "\n" + _PWD + (strcmp( _currentDir.c_str(), _PWD.c_str() ) == 0 ? 
+			    _get = _PWD + (strcmp( _currentDir.c_str(), _PWD.c_str() ) == 0 ? 
 			    "" : _currentDir) + ":Mi_sh>" + _line;
 			}
         }else{
