@@ -182,6 +182,144 @@ void FAT::initialize(){
 	}
 }
 
+string FAT::strToBin(string value){
+	string ret = "";
+	for (std::size_t i = 0; i < value.size(); ++i){
+		bitset<8> b(value[i]);
+		ret += b.to_string();
+	}
+	return ret;
+}
+
 void FAT::save() {
+	string _output = "";
+	stringstream ss;
+	//STORE ROOT SECTION
+	for( int i = 0; i < 512; i++ ){
+		if( _root[i]._free ){
+			_output += "0x000000";
+		}else{
+			//STORE IF IS FREE
+			_output += _root[i]._free ? "0x000000" : "0x111111";
+			_output += ",";
+
+			//STORE NAME
+			string str( _root[i].name );
+			_output += strToBin(str);
+			_output += ",";
+
+			//STORE IF IS A DIRECTORY
+			_output += _root[i]._dir ? "0x000010" : "0x000020";
+			_output += ",";
+
+			//STORE CREATION DATE
+			ss << _root[i]._cDate;
+			_output += strToBin( ss.str() );
+			_output += ",";
+
+			//STORE CLUSTER
+			ss.str("");
+			ss << _root[i]._cluster;
+			_output += strToBin( ss.str() );
+			_output += ",";
+
+			//STORE SIZE
+			unsigned int mask = 1 << (sizeof(int)*8-1);
+			for( int j = 0; j < sizeof(int)*8; j++ ){
+				if( (_root[i]._size & mask) == 0 )
+					_output += '0';
+				else
+					_output += '1';
+				mask >>= 1;
+			}
+			_output += ",";
+
+			//STORE RESERVED
+			string rese( _root[i]._reserved );
+			_output += strToBin( rese );
+		}
+		_output += ";";
+	}
+	_output += "$";
 	
+	//STORE FAT SECTION
+	for( int i = 0; i < 65535; i++ ){
+		ss.str("");
+		ss << _FAT[i];
+		_output += strToBin( ss.str() );
+		_output += ",";
+	}
+	_output += "$";
+	for( int i = 0; i < 65535; i++ ){
+		ss.str("");
+		ss << _FAT[i];
+		_output += strToBin( ss.str() );
+		_output += ",";
+	}
+	_output += "$";
+
+	//STORE DATA REGION
+	for( int i = 0; i < 65535; i++ ){
+		if( _dataRegion[i].entries == NULL && _dataRegion[i].buffer == NULL ){
+			for( int j = 0; j < 32768; j++ )
+				_output += "0";
+		}else if( _dataRegion[i].entries == NULL && _dataRegion[i].buffer != NULL ){
+			string out( _dataRegion[i].buffer );
+			_output += out;
+		}else if( _dataRegion[i].entries != NULL && _dataRegion[i].buffer == NULL ){
+			for( int j = 0; j < 128; j++ ){
+				//STORE IF IS FREE
+				_output += _dataRegion[i].entries[j]._free ? "0x000000" : "0x111111";
+				_output += ",";
+
+				//STORE NAME
+				string str( _dataRegion[i].entries[j].name );
+				_output += strToBin(str);
+				_output += ",";
+
+				//STORE IF IS A DIRECTORY
+				_output += _dataRegion[i].entries[j]._dir ? "0x000010" : "0x000020";
+				_output += ",";
+
+				//STORE CREATION DATE
+				ss << _dataRegion[i].entries[j]._cDate;
+				_output += strToBin( ss.str() );
+				_output += ",";
+
+				//STORE CLUSTER
+				ss.str("");
+				ss << _dataRegion[i].entries[j]._cluster;
+				_output += strToBin( ss.str() );
+				_output += ",";
+
+				//STORE SIZE
+				unsigned int mask = 1 << (sizeof(int)*8-1);
+				for( int j = 0; j < sizeof(int)*8; j++ ){
+					if( (_dataRegion[i].entries[j]._size & mask) == 0 )
+						_output += '0';
+					else
+						_output += '1';
+					mask >>= 1;
+				}
+				_output += ",";
+
+				//STORE RESERVED
+				string rese( _dataRegion[i].entries[j]._reserved );
+				_output += strToBin( rese );
+			}
+			_output += "#";
+		}
+		_output += ";";
+	}
+	
+	//WRITE IN FILE
+	remove("OS.fat");
+	//ofstream _file;
+	//_file.open( "OS.fat", ofstream::out );
+	//_file << _output;
+	//_file.close();
+	FILE * pFile;
+	pFile = fopen ("OS.fat", "wb");
+	fwrite (_output.c_str() , sizeof(char), 268713984, pFile);
+	fclose (pFile);
 }
