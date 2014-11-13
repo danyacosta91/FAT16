@@ -32,6 +32,13 @@ void Tokenize(const string& str, vector<string>& tokens, const string& delimiter
     }
 }
 
+string toUpperCase(string name){
+	string ret = "";
+	for( int i = 0; i < name.size(); i++ )
+		ret += toupper(name[i]);
+	return ret;
+}
+	
 string sePuedeCompletar(string line, vector<string>& tokens){
     int cont = 0;
     string val = "";
@@ -56,11 +63,6 @@ string sePuedeCompletar(string line, vector<string>& tokens){
 
 int main(){
 	_fat = new FAT();
-	initscr();
-	start_color();
-   init_pair(2, COLOR_BLACK, COLOR_RED );
-   init_pair(1, COLOR_BLACK, COLOR_WHITE );
-	init_pair(3, COLOR_BLACK, COLOR_BLUE );
 	char tecla;
     string _line = "", _tmp = "", _get = _PWD + ":Mi_sh>";
     _currentDir = "/";
@@ -72,9 +74,9 @@ int main(){
     _TComandos.push_back("cd");_TComandos.push_back("cd ..");
     _TComandos.push_back("--help");_TComandos.push_back("mkdir");
 	 _TComandos.push_back("exit");_TComandos.push_back("clear");
+	initscr();
 
 	do{
-		attron( COLOR_PAIR(1) | A_BOLD );
 		erase();
 		printw(_get.c_str());
 		tecla = getch();
@@ -100,38 +102,50 @@ int main(){
 					_get = _PWD + 
 						(strcmp( _currentDir.c_str(), _PWD.c_str() ) == 0 ? "" : _currentDir) + ":Mi_sh>";
 				}else if( strcmp( _args[0].c_str(), "ls" ) == 0 ){
-					vector<d_entry> _returnValues = _fat->listDirectory();
-					stringstream ss;
+					vector<string> splitteado;
+					Tokenize( _fat->listDirectory(), splitteado, "," );
+					string print = "\n";
 					if( _args.size() > 1 ){
-						attron( COLOR_PAIR(1) | A_BOLD );
-						printw( "NAME\tTYPE\tDATE\tSIZE\n" );
-						for( auto it = _returnValues.begin(); it != _returnValues.end(); it++ ){
-							if( (*it)._dir )
-								attron( COLOR_PAIR(2) | A_BOLD );
-							else
-								attron( COLOR_PAIR(1) | A_BOLD );
-							ss << (*it).name << "\t" << (*it)._dir == true ? "DIR\t" : "FILE\t" << (*it)._cDate <<  "\t" << (*it)._size << "\n";
-							printw( ss.str().c_str() );
-							ss.str("");
+						for( int i = 0; i < splitteado.size(); i += 4 ){
+							if( i < splitteado.size() ){
+								print = "\n" + splitteado[i] + "\t" + (splitteado[i+1] == "0" ? "FILE" : "DIR") + "\t" + splitteado[i+2] + "\t" + splitteado[i+3] + "\n";
+								printw( print.c_str() );
+								_get += print;
+							}
 						}
-						_get = _PWD + 
-						(strcmp( _currentDir.c_str(), _PWD.c_str() ) == 0 ? "" : _currentDir) + ":Mi_sh>";
 					}else{
-						for( auto it = _returnValues.begin(); it != _returnValues.end(); it++ ){
-							if( (*it)._dir )
-								attron( COLOR_PAIR(2) | A_BOLD );
-							else
-								attron( COLOR_PAIR(1) | A_BOLD );
-							ss << (*it).name << "\t";
-							printw( ss.str().c_str() );
-							ss.str("");
+						print = splitteado[0] + "\t" + splitteado[1] + "\t" + splitteado[2] + "\t" + splitteado[3];
+						printw( print.c_str() );
+						for( int i = 4; i < splitteado.size(); i += 4 ){
+							if( i < splitteado.size() ){
+								print = "\n" + splitteado[i] + "\n";
+								printw( print.c_str() );
+								_get += print;
+							}
 						}
-						_get = _PWD + 
-						(strcmp( _currentDir.c_str(), _PWD.c_str() ) == 0 ? "" : _currentDir) + ":Mi_sh>";
 					}
+					_get += "\n" +  _PWD + 
+						(strcmp( _currentDir.c_str(), _PWD.c_str() ) == 0 ? "" : _currentDir) + ":Mi_sh>";
 				}else if( strcmp( _args[0].c_str(), "cat" ) == 0 ){
 					if( _args.size() > 1 ){
-						_fat->save();
+						if( _args.size() > 2 ){
+							if( strcmp( _args[1].c_str(), ">" ) == 0 ){
+								erase();
+								string writeLine = "";								
+								do{
+									tecla = getch();
+									if( tecla != 27 )
+										writeLine += tecla;
+								}while( tecla != 27 );
+								_get += "\n" + writeLine + "\n" + _PWD + 
+									(strcmp( _currentDir.c_str(), _PWD.c_str() ) == 0 ? "" : _currentDir) + ":Mi_sh>";
+							}
+							//_fat->save();
+						}else{
+							erase();
+							_get = "Not enough arguments!\nType: --help for options.\n" + _PWD + 
+							(strcmp( _currentDir.c_str(), _PWD.c_str() ) == 0 ? "" : _currentDir) + ":Mi_sh>";
+						}
 					}else{
 						erase();
 						_get = "Not enough arguments!\nType: --help for options.\n" + _PWD + 
@@ -139,8 +153,8 @@ int main(){
 					}
 				}else if( strcmp( _args[0].c_str(), "rmdir" ) == 0 ){
 					if( _args.size() > 1 ){
-						if( _fat->searchDir(_args[1]) ){
-							_fat->save();
+						if( _fat->searchDir( toUpperCase(_args[1]) ) ){
+							//_fat->save();
 						}else{
 							erase();
 							_get = "Error: Name of dir exist!\nType: --help for options.\n" + _PWD + 
@@ -153,12 +167,12 @@ int main(){
 					}
 				}else if( strcmp( _args[0].c_str(), "mkdir" ) == 0 ){
 					if( _args.size() > 1 ){
-						if( _fat->searchDir( _args[1] ) == false ){
-							_fat->mkdir( _args[1] );
+						if( _fat->searchDir( toUpperCase(_args[1]) ) == false ){
+							_fat->mkdir( toUpperCase(_args[1]) );
 							erase();
 							_get = _PWD + 
 							(strcmp( _currentDir.c_str(), _PWD.c_str() ) == 0 ? "" : _currentDir) + ":Mi_sh>";
-							_fat->save();
+							//_fat->save();
 						}
 						else{
 							erase();
@@ -172,7 +186,7 @@ int main(){
 					}
 				}else if( strcmp( _args[0].c_str(), "delete" ) == 0 ){
 					if( _args.size() > 1 ){
-						_fat->save();
+						//_fat->save();
 					}else{
 						erase();
 						_get = "Not enough arguments!\nType: --help for options.\n" + _PWD + 
@@ -181,37 +195,42 @@ int main(){
 				}else if( strcmp( _args[0].c_str(), "cd" ) == 0 ){
 					if( _args.size() > 1 ){
 						if( strcmp( _args[1].c_str(), ".." ) == 0 ){
-							_args.clear();
-							Tokenize( _currentDir, _args, "/" );
-							if( _args.size()-1 > 1 ){
-								_currentDir = "";
-								for( auto it = 0; it < _args.size()-1; it++ ){
-									if( it < _args.size()-2 )
-										_currentDir += _args[it] + "/";
-									else
-										_currentDir += _args[it];
+							if( strcmp( _currentDir.c_str(), "/" ) != 0 ){
+								_args.clear();
+								Tokenize( _currentDir, _args, "/" );
+								if( _args.size()-1 > 1 ){
+									_currentDir = "";
+									for( auto it = 0; it < _args.size()-1; it++ ){
+										if( it < _args.size()-2 )
+											_currentDir += _args[it] + "/";
+										else
+											_currentDir += _args[it];
+									}
+								}else{
+									_currentDir = _PWD;
+									_get = _PWD + ":Mi_sh>";
 								}
-							}else{
-								_currentDir = _PWD;
-								_get = _PWD + ":Mi_sh>";
-							}
-							_fat->changeDirectory( _args[1] );
+								_fat->changeDirectory( toUpperCase(_args[1]) );
+							}else
+								_get = _PWD + 
+					     		 (strcmp( _currentDir.c_str(), _PWD.c_str() ) == 0 ? "" : _currentDir) + ":Mi_sh>";
 						}else{
-              if( _fat->searchDir( _args[1] ) ){
-                if( strcmp( _currentDir.c_str(), _PWD.c_str() ) == 0 )
-                  _currentDir = _args[1] + "/";
-                else
-                  _currentDir += _args[1] + "/";
-                _get = _PWD + _currentDir + ":Mi_sh>";
-					 _fat->changeDirectory( "null" );
-              }else{
-                _get = "Error: Dir not found!\n" + _PWD + 
-					      (strcmp( _currentDir.c_str(), _PWD.c_str() ) == 0 ? "" : _currentDir) + ":Mi_sh>";
-              }
+						  if( _fat->searchDir( toUpperCase(_args[1]) ) ){
+							 if( strcmp( _currentDir.c_str(), _PWD.c_str() ) == 0 )
+								_currentDir = _args[1] + "/";
+							 else
+								_currentDir += _args[1] + "/";
+							  _fat->changeDirectory( toUpperCase(_args[1]) );
+							 _get = _PWD + _currentDir + ":Mi_sh>";
+						  }else{
+							 _get = "Error: Dir not found!\n" + _PWD + 
+									(strcmp( _currentDir.c_str(), _PWD.c_str() ) == 0 ? "" : _currentDir) + ":Mi_sh>";
+						  }
 						}
 					}else{
 						_currentDir = _PWD;
 						_get = _PWD + ":Mi_sh>";
+						 _fat->changeDirectory( "NULL" );
 					}
 				}else
 					_get = "Command not supported!\nType: --help for options.\n" + _PWD + 

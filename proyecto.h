@@ -16,6 +16,7 @@ using namespace std;
 class FAT
 {
 private:
+	#pragma pack(1)
 	struct d_entry{
 		bool _free;
 		char name[10];
@@ -33,7 +34,11 @@ private:
 	unsigned short _FAT[65535];
 	_cluster _dataRegion[65535];	
 	d_entry* currentDir;
+	d_entry* parentDir;
 	queue<int> freeIndex;
+	string strToBin(string);
+	string B_to_A(string);
+	void Tokenize(const string&, vector<string>&, const string&);
 public:
 	FAT();
 	~FAT();
@@ -41,6 +46,13 @@ public:
 	bool searchDir(string);
 	bool searchFile(string);
 	void checkFreeIndex();
+	void changeDirectory(string);
+	void print(string);
+	string formatDate(time_t);
+	string cat(string);
+	void wCat(string);
+	string listDirectory();
+	d_entry* retrieveDir(string);
 	int getblockSize();
 	void initialize();
 	void save();
